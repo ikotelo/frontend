@@ -1,19 +1,30 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import axios from 'axios';
 import { formatDate } from '../utils/formatDate';
 
 const Item = ({ article }) => {
-    const { title, description, date, content, author, } = article
-
-    const [isArchived, setIsArchived] = useState(false);
+    const [news, setNews] = useState([]);
+    const { title, description, date, content, author, archiveDate } = article
 
     const handleArchiveClick = async () => {
         try {
-            const response = await axios.put(`/news/${article._id}`, {
-                archiveDate: new Date()
+            const currentDateISO = new Date().toISOString();
+            const response = await axios.put(`http://localhost:3000/news/${article._id}`, {
+                archiveDate: currentDateISO
             });
-            console.log(response.data);
-            setIsArchived(true);
+
+            setNews(updatedNews => {
+                const updatedArticles = updatedNews.map(article => {
+                    if (article._id === response.data._id) {
+                        return {
+                            ...article,
+                            archiveDate: currentDateISO
+                        };
+                    }
+                    return article;
+                });
+                return updatedArticles;
+            });
         } catch (error) {
             console.error('Error archiving news article:', error);
         }
@@ -35,7 +46,7 @@ const Item = ({ article }) => {
                         <p className="card-text"><small className="text-body-secondary">{formatDate(date)}</small></p>
                     </div>
                     <div className='d-flex mx-auto justify-content-center align-items-center'>
-                        {isArchived ? (
+                        {date !== archiveDate ? (
                             <p>Esta noticia ha sido archivada</p>
                         ) : (
                             <button className="btn" type="button" style={{ width: 'fit-content' }} onClick={handleArchiveClick}>
